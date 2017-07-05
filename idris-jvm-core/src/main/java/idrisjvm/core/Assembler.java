@@ -27,6 +27,7 @@ import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ANEWARRAY;
 import static org.objectweb.asm.Opcodes.ARETURN;
 import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.BIPUSH;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.DADD;
 import static org.objectweb.asm.Opcodes.DDIV;
@@ -354,7 +355,7 @@ public class Assembler {
         } else if (n == -1) {
             mv.visitInsn(ICONST_M1);
         } else if (n >= (-128) && n <= 127) {
-            mv.visitIntInsn(Opcodes.BIPUSH, n);
+            mv.visitIntInsn(BIPUSH, n);
         } else if (n >= (-32768) && n <= 32767) {
             mv.visitIntInsn(SIPUSH, n);
         } else {
@@ -565,6 +566,10 @@ public class Assembler {
 
     public void methodCodeEnd() {
         mv.visitEnd();
+    }
+
+    public void multiANewArray(String desc, int noOfDims) {
+        mv.visitMultiANewArrayInsn(desc, noOfDims);
     }
 
     public void asmNew(String className) {

@@ -336,6 +336,7 @@ runAsm subroutines assembler (MaxStackAndLocal stack local)
   = singleInst subroutines $ invokeInstance "maxStackAndLocal" (Assembler -> Int -> Int -> JVM_IO ()) assembler stack local
 runAsm subroutines assembler MethodCodeStart = singleInst subroutines $ invokeInstance "methodCodeStart" (Assembler -> JVM_IO ()) assembler
 runAsm subroutines assembler MethodCodeEnd = singleInst subroutines $ invokeInstance "methodCodeEnd" (Assembler -> JVM_IO ()) assembler
+runAsm subroutines assembler (Multianewarray desc dims) = singleInst subroutines $ invokeInstance "multiANewArray" (Assembler -> String -> Int -> JVM_IO ()) assembler desc (cast dims)
 runAsm subroutines assembler (New cname) = singleInst subroutines $ invokeInstance "asmNew" (Assembler -> String -> JVM_IO ()) assembler cname
 runAsm subroutines assembler (InstanceOf cname) = singleInst subroutines $ invokeInstance "asmInstanceOf" (Assembler -> String -> JVM_IO ()) assembler cname
 runAsm subroutines assembler Pop = singleInst subroutines $ invokeInstance "pop" (Assembler -> JVM_IO ()) assembler

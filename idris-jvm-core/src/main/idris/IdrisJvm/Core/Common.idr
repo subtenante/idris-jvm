@@ -96,6 +96,11 @@ repeatObjectDesc n = repeatString n "Ljava/lang/Object;"
 sig : Nat -> String
 sig nArgs = "(" ++ repeatObjectDesc nArgs ++  ")Ljava/lang/Object;"
 
+arrayDesc : String -> Nat -> String
+arrayDesc cname dimensions =
+  let arrayPrefix = cast $ replicate dimensions '['
+  in arrayPrefix ++ cname
+
 metafactoryDesc : Descriptor
 metafactoryDesc =
   concat [ "("

@@ -14,6 +14,8 @@ data JForeign = JStatic String String
               | JSetInstanceField String String
               | JInterface String String
               | JNew String
+              | JNewArray String
+              | JMultiNewArray String
               | JClassLiteral String
 
 mutual
@@ -21,7 +23,7 @@ mutual
   parseDescriptor returns ffi argsDesc = tryParseStaticMethodDescriptor returns ffi argsDesc where
 
     unsupportedDescriptor : FDesc -> FDesc -> List (FDesc, LVar) -> JForeign
-    unsupportedDescriptor _ fdesc _ = jerror $ "Unsupported descriptor"
+    unsupportedDescriptor _ fdesc _ = jerror $ ("Unsupported descriptor: " ++ show fdesc)
 
     tryParseClassLiteralDescriptor : FDesc -> FDesc -> List (FDesc, LVar) -> JForeign
     tryParseClassLiteralDescriptor returns ffiDesc@(FApp ffi [FStr cname]) argsDesc
@@ -29,6 +31,20 @@ mutual
           then JClassLiteral cname
           else unsupportedDescriptor returns ffiDesc argsDesc
     tryParseClassLiteralDescriptor returns ffi argsDesc = unsupportedDescriptor returns ffi argsDesc
+
+    tryParseMultiNewArrayDescriptor : FDesc -> FDesc -> List (FDesc, LVar) -> JForeign
+    tryParseMultiNewArrayDescriptor returns ffiDesc@(FApp "MultiNewArray" [FApp "Class" [FStr cname], FStr dimStr]) argsDesc
+      = JMultiNewArray (arrayDesc (asmRefTyDesc (ClassDesc cname)) (cast dimStr))
+    tryParseMultiNewArrayDescriptor returns ffiDesc@(FApp "MultiNewArray" [FApp "Interface" [FStr cname], FStr dimStr]) argsDesc
+      = JMultiNewArray (arrayDesc (asmRefTyDesc (InterfaceDesc cname)) (cast dimStr))
+    tryParseMultiNewArrayDescriptor returns ffi argsDesc = tryParseClassLiteralDescriptor returns ffi argsDesc
+
+    tryParseNewArrayDescriptor : FDesc -> FDesc -> List (FDesc, LVar) -> JForeign
+    tryParseNewArrayDescriptor returns ffiDesc@(FApp "NewArray" [FApp "Class" [FStr cname]]) argsDesc
+      = JNewArray cname
+    tryParseNewArrayDescriptor returns ffiDesc@(FApp "NewArray" [FApp "Interface" [FStr cname]]) argsDesc
+      = JNewArray cname
+    tryParseNewArrayDescriptor returns ffi argsDesc = tryParseMultiNewArrayDescriptor returns ffi argsDesc
 
     tryParseConstructorDescriptor : FDesc -> FDesc -> List (FDesc, LVar) -> JForeign
     tryParseConstructorDescriptor returns ffiDesc@(FCon ffi) argsDesc
@@ -41,8 +57,8 @@ mutual
                   IdrisExportDesc _  => jerror "Cannot invoke constructor of Idris exported type"
                   NullableStrDesc    => jerror "A constructor cannot return a nullable string"
                   NullableRefDesc _  => jerror "A constructor cannot return a nullable reference"
-          else tryParseClassLiteralDescriptor returns ffiDesc argsDesc
-    tryParseConstructorDescriptor returns ffi argsDesc = tryParseClassLiteralDescriptor returns ffi argsDesc
+          else tryParseNewArrayDescriptor returns ffiDesc argsDesc
+    tryParseConstructorDescriptor returns ffi argsDesc = tryParseNewArrayDescriptor returns ffi argsDesc
 
     tryParseSetInstanceFieldDescriptor : FDesc -> FDesc -> List (FDesc, LVar) -> JForeign
     tryParseSetInstanceFieldDescriptor returns ffiDesc@(FApp ffi [FStr fieldName]) argsDesc@((declClass, _)::_)

@@ -164,6 +164,18 @@ mutual
       InvokeMethod InvokeSpecial clazz "<init>" descriptor False
       ret
 
+    cgForeign (JNewArray elemTy) = case args of
+      [ty] => do
+        idrisToJava argsWithTypes
+        Anewarray elemTy
+        ret
+      otherwise => jerror $ "There can be only one argument (length) to create an array: " ++ elemTy
+
+    cgForeign (JMultiNewArray elemTy) = do
+        idrisToJava argsWithTypes
+        Multianewarray elemTy (List.length args)
+        ret
+
     cgForeign (JClassLiteral "int") = do getPrimitiveClass "java/lang/Integer"; ret
     cgForeign (JClassLiteral "byte") = do getPrimitiveClass "java/lang/Byte"; ret
     cgForeign (JClassLiteral "char") = do getPrimitiveClass "java/lang/Character"; ret

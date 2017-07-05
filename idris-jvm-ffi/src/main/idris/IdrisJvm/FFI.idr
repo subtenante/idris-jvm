@@ -16,17 +16,23 @@ data Annotation = Ann AnnotationTypeName (List AnnotationNameValuePair)
 
 data JVM_NativeTy = Class String
                   | Interface String
-                  | Primitive String
+                  | JavaInt
+                  | JavaDouble
                   | Array JVM_NativeTy
 
 data JVM_Native  : JVM_NativeTy -> Type where
-  MkJVMNative : (ty : JVM_NativeTy) -> JVM_Native ty
+  MkJVMNative : (elemTy : JVM_NativeTy) -> JVM_Native (Array elemTy)
 
-data JVM_FfiFn = Static JVM_NativeTy  String
+data JVM_Array : JVM_NativeTy -> Type where
+  MkArray : (ty: JVM_NativeTy) -> JVM_Array ty
+
+data JVM_FfiFn = Static JVM_NativeTy String
                | GetStaticField JVM_NativeTy String
                | SetStaticField JVM_NativeTy String
                | Constructor
                | New
+               | NewArray JVM_NativeTy
+               | MultiNewArray JVM_NativeTy String
                | ClassLiteral String
                | Instance String
                | GetInstanceField String
@@ -70,9 +76,6 @@ mutual
       JVM_IntT    : JVM_IntTypes i -> JVM_Types i
       JVM_ArrayT  : JVM_Types (JVM_Array t)
 
-  data JVM_Array : JVM_NativeTy -> Type where
-      MkArray : (ty: JVM_NativeTy) -> JVM_Array ty
-
   ||| A descriptor for the JVM FFI. See the constructors of `JVM_Types`
   ||| and `JVM_IntTypes` for the concrete types that are available.
   FFI_JVM : FFI
@@ -98,6 +101,13 @@ javaInterface = JVM_Native . Interface
 %inline
 new : (ty : Type) -> {auto fty : FTy FFI_JVM [] ty} -> ty
 new ty = javacall New ty
+
+%inline
+newArray : (elemTy: JVM_NativeTy) -> Nat -> JVM_IO (JVM_Array elemTy)
+newArray elemTy size = javacall (NewArray elemTy) (Int ->JVM_IO $ JVM_Array elemTy) (cast size)
+
+newMultiArray : (elemTy: JVM_NativeTy) -> (noOfDims: String) -> (ty : Type) -> {auto fty : FTy FFI_JVM [] ty} -> ty
+newMultiArray elemTy noOfDims = javacall (MultiNewArray elemTy noOfDims)
 
 %inline
 invokeInstance : String -> (ty : Type) -> {auto fty : FTy FFI_JVM [] ty} -> ty

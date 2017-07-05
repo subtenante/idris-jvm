@@ -146,7 +146,6 @@ Eq JMethodName where
 Show JMethodName where
   show (MkJMethodName cname mname) = cname ++ "#" ++ mname
 
-
 asmRefTyDesc : ReferenceTypeDescriptor -> String
 asmRefTyDesc (ClassDesc c)       = "L" ++ c ++ ";"
 asmRefTyDesc (IdrisExportDesc c) = "L" ++ c ++ ";"
@@ -267,6 +266,7 @@ data Asm : Type -> Type where
     MaxStackAndLocal : Int -> Int -> Asm ()
     MethodCodeStart : Asm ()
     MethodCodeEnd : Asm ()
+    Multianewarray : Descriptor -> Nat -> Asm ()
     New : ClassName -> Asm ()
     InstanceOf : ClassName -> Asm ()
     Pop : Asm ()
